@@ -1,9 +1,14 @@
 // Uncomment the code below and write your tests
 import { throttledGetDataFromApi } from './index';
 import axios from 'axios';
-jest.mock('axios');
+
+const relativePath = 'some/path';
 
 describe('throttledGetDataFromApi', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
   beforeAll(() => {
     jest.useFakeTimers();
   });
@@ -13,22 +18,34 @@ describe('throttledGetDataFromApi', () => {
   });
 
   test('should create instance with provided base url', async () => {
-    (axios.create as jest.Mock).mockReturnValue({ get: () => ({}) });
+    const axiosCreateSpy = jest.spyOn(axios, 'create');
+    jest.spyOn(axios.Axios.prototype, 'get').mockResolvedValue({});
 
-    const relativePath = 'some/path';
     await throttledGetDataFromApi(relativePath);
-
-    expect(axios.create).toHaveBeenCalledTimes(1);
-    expect(axios.create).toHaveBeenCalledWith({
+    jest.runAllTimers();
+    expect(axiosCreateSpy).toHaveBeenCalledWith({
       baseURL: 'https://jsonplaceholder.typicode.com',
     });
   });
 
   test('should perform request to correct provided url', async () => {
-    // Write your test here
+    const axiosGetSpy = jest
+      .spyOn(axios.Axios.prototype, 'get')
+      .mockResolvedValue({});
+
+    await throttledGetDataFromApi(relativePath);
+    jest.runAllTimers();
+    expect(axiosGetSpy).toHaveBeenCalledWith(relativePath);
   });
 
   test('should return response data', async () => {
-    // Write your test here
+    const responseData = 'some data';
+    jest
+      .spyOn(axios.Axios.prototype, 'get')
+      .mockResolvedValue({ data: responseData });
+
+    const result = await throttledGetDataFromApi(relativePath);
+    jest.runAllTimers();
+    expect(result).toBe(responseData);
   });
 });
